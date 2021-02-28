@@ -22,15 +22,17 @@ Install Raspbian in the Raspberri Pi, obtain access to the prompt and ensure to 
 The network configuration is done using [systemd networkd](https://wiki.archlinux.org/index.php/systemd-networkd), which is a powerful yet simple and intuitive network manager. 
 
 For using systemd networkd, other network servies must be disabled. (See point 2.1 before doing this). At this point in time, dhcpcd is the default service in Raspbian:
+```shell
 > systemctl stop dhcpcd && systemctl disable dhcpcd
-
+```
 Then, enable and activate systemd-networkd:
+```shell
 > systemctl enable systemd-networkd.service && systemctl start systemd-networkd.service
 > systemctl enable systemd-resolved.service && systemctl start systemd-resolved.service
+```
+Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in this directory /etc/systemd/network/ , with file  extension .network. You can find more details [here](https://blog.michael.franzl.name/2017/02/28/raspberry-pi-gateway-mobile-internet/)
 
-Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in this directory /etc/systemd/network/ with , with file  extension .network. I got inspired by this [blog](https://blog.michael.franzl.name/2017/02/28/raspberry-pi-gateway-mobile-internet/)
-
-### 2.1 Ehernet 
+### 2.1 Ethernet 
 ```shell
 > sudo nano /etc/systemd/network/01_eth.network
 ```
@@ -46,7 +48,7 @@ Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in 
 > sudo systemctl restart systemd-networkd
 ```
 
->When sharing the Internet from the WiFi adapter in Windows, the ethernet is assigned a static IP 192.168.137.50. Please note that this interface is only used to configure the Raspberry with the laptop. Perhaps, it is better to perform this step before disabling the dhcpd service, as the Raspberry may not accept the Putty connection (I don´t remember on detail how I did this).
+>When sharing the Internet from the WiFi adapter in Windows, the ethernet is assigned a static IP 192.168.137.1. Please note that this interface is only used to configure the Raspberry with the laptop. Perhaps, it is better to perform this step before disabling the dhcpd service, as the Raspberry may not accept the Putty connection (I don´t remember with detail how I did this).
 > Metric = 500 is used to decide the priority of using the gateway for the Internet connection. If it is the lowest among the interfaces with Internet access, this will be the default path used by Raspberry.
 > 
 ### 2.2 USB mobile tethering
@@ -66,7 +68,7 @@ For this interface to work, you will need to connect the mobile device to the US
 
 ### 2.3 WiFi hotspot
 There are two main steps to be taken: configuring the wireless access point (WAP) and configuring the network interface.
-> For this project, I used a Ralink RT5370 usb dongle, as my raspberry pi had no WiFi card. You can check if the Raspberry is detecting the usb dongle running > lsusb.
+> For this project, I used a Ralink RT5370 usb dongle, as my raspberry pi had no WiFi card. You can check if the Raspberry is detecting the usb dongle running (> lsusb).
 
 #### 2.3.1 WAP
 The wifi hotspot is configured with hostapd. You can find a more detailed example [here](http://va.nce.me/Creating_an%20Access_Point.html)
@@ -79,14 +81,12 @@ Then, configure the access point:
 ```shell
 sudo nano  /etc/hostapd/hostapd.conf
 ```
-    # Basics
     interface=wlan0
     driver=nl80211
     ssid="YourSSID"
     hw_mode=g
     channel=1
 
-    # Security Settings - wpa2 only
     macaddr_acl=0
     auth_algs=1
     ignore_broadcast_ssid=0
@@ -125,7 +125,7 @@ At this point, you can check that everything is configured and looking as expect
 > route -n
 ```
 ### 2.4 Problems with DNS name resolution 
-> I had some problems with internet name resolution, after switching to systemd-networkd, although probably I did something I shouldn´t. My two network interfaces had internet access (> ping 8.8.8.8), but DNS name resolution was not working (ping www.google.com). I sorted the problem doing [this](https://askubuntu.com/questions/1098414/18-04-unable-to-connect-to-server-due-to-temporary-failure-in-name-resolution). I had to create manually a simbolic link:
+> I had some problems with internet name resolution, after switching to systemd-networkd, although probably I did something I shouldn´t have done. The two network interfaces had internet access (> ping 8.8.8.8), but DNS name resolution was not working (> ping www.google.com). I sorted the problem doing [this](https://askubuntu.com/questions/1098414/18-04-unable-to-connect-to-server-due-to-temporary-failure-in-name-resolution). I had to create manually a simbolic link:
 
 ```shell
 > sudo rm -f /etc/resolv.conf
@@ -133,7 +133,7 @@ At this point, you can check that everything is configured and looking as expect
 > reboot
 ```
 ## 3. Connect weather station using WSview android app
-Configure the weather station connection to wlan0 access point created in previous step. Follow the steps detailed in WSview app, and choose "Customized" server, with the IP of the wlan0 (192.168.4.1) port 8080. Then, save configuration and check that the station console shows the WiFi icon. 
+Configure the weather station connection to wlan0 access point created in previous step. Follow the steps detailed in WSview app, and choose "Customized" server, with the IP of the wlan0 (192.168.4.1) port 8080. Fill the other fields related to Wunderground service. Then, save configuration and check that the station console shows the WiFi icon. 
 
 Then check that the data is arriving at the raspberry using tcpdump.
 ```shell
@@ -193,7 +193,7 @@ If your station is located in a region with intermittent mobile signal, you migh
   
 ## 5. Configure Android device to enable USB tethering automatically
 So far, the system should be robust to log all the data in the local database, and all the systems should restart automatically after a power outage. However, the phone´s USB tethering has to be enabled manually each time the system is restored. Depending on the location of the weather station, power outages can be relatively frequent, in which case the android device can be programmed to enable USB tethering by default.
-First the phone has to be rooted. I used Kingoroot. Then, in the Google market there are some applications that allow to define decision rules. I used [Automate](https://play.google.com/store/apps/details?id=com.llamalab.automate), and then created this rule:
+First the phone has to be rooted, for instand by using Kingo root. Then, install [Automate](https://play.google.com/store/apps/details?id=com.llamalab.automate) and set a rule like this:
 
 <img src="https://github.com/Alvipas/remote_meteo_station/blob/main/automate.jpeg?raw=true" width="500">
 
