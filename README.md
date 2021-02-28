@@ -124,7 +124,7 @@ At this point, you can check that everything is configured and looking as expect
 > networkctl
 > route -n
 ```
-## 2.4 Problems with DNS name resolution 
+### 2.4 Problems with DNS name resolution 
 > I had some problems with internet name resolution, after switching to systemd-networkd, although probably I did something I shouldn´t. My two network interfaces had internet access (> ping 8.8.8.8), but DNS name resolution was not working (ping www.google.com). I sorted the problem doing [this](https://askubuntu.com/questions/1098414/18-04-unable-to-connect-to-server-due-to-temporary-failure-in-name-resolution). I had to create manually a simbolic link:
 
 ```shell
