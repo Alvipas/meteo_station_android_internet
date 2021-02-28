@@ -1,21 +1,25 @@
-# Tutorial: WiFi weather station + weewx + mobile phone internet access
-Tutorial to configure data acquisition in a weather station with Wi-Fi connection (Froggit WH3000) with connection to Wunderground, using weewx-interceptor and an old mobile as an internet access point.
+# Tutorial: WiFi weather station + weewx + android phone internet access
+Tutorial to configure the data acquisition in a weather station with Wi-Fi connection (Froggit WH3000), storing the data locally and using the Wunderground service. An android phone is used as an internet access point.
 
->My motivation for this project was to capture weather data in my village in Teruel, while having the data available online in Wunderground and keep a local record or raw metered data. I wanted to repurpose some of hardware that I had available at home: an old (but functional) internet router, an old (but functional) mobile phone and an old (but functional) Raspberry Pi. My first setup using the WiFi router as a gateway poved to be unreliable after a few months, so I decided to buy an usb WiFi usb dongle for the Raspberry. 
+>My motivation for this project was to capture weather data in my village in Teruel, while having the data available online in Wunderground and keep a local record or raw metered data. I wanted to repurpose some of hardware that I had available at home: an old (but functional) internet router, an old (but functional) mobile phone and an old (but functional) Raspberry Pi. My first setup using the WiFi router as a gateway poved to be unreliable after a few months, so I decided to buy an usb WiFi adapter for the Raspberry. 
+
 >Weewx helped me manage my prepaid SIM card data usage by setting the frequency to send data to Wunderground. In addition, it allowed to fill in data gaps during periods without internet signal at the location of the weather station.
+
+>I am not a Linux or network expert, so I have not pretended to give a detailed explanation of all systems. My hope is that my experience will help others with similar problems when installing weather stations in remote locations.
 
 <img src="https://github.com/Alvipas/remote_meteo_station/blob/main/set_up.jpeg?raw=true" width="500">
 
+<img src="https://github.com/Alvipas/remote_meteo_station/blob/main/diagram.png?raw=true" width="500">
 
 
 ## 1. Install Raspbian
 Install Raspbian in the Raspberri Pi, obtain access to the prompt and ensure to have internet connection. Then update and upgrade Raspbian.
 
-> I created an empty file "ssh" in the root directory of the SD to activate SSH access. Then, I connected via ethernet from windows laptop using Putty. I shared internet connection in my laptop WiFi adapter. Example [here](http://carbonstone.blogspot.com/2014/02/connecting-to-pi-from-laptops-ethernet.html) .
+> I created an empty file "ssh" in the root directory of the SD to activate SSH access. Then, I connected via ethernet from windows laptop using Putty. I shared internet connection in my laptop´s WiFi adapter. Example [here](http://carbonstone.blogspot.com/2014/02/connecting-to-pi-from-laptops-ethernet.html) .
 > 
 
 ## 2. Configure network interfaces
-The network configuration is done using [systemd networkd](https://wiki.archlinux.org/index.php/systemd-networkd), which is a powerful, yet simple and intuitive network manager. 
+The network configuration is done using [systemd networkd](https://wiki.archlinux.org/index.php/systemd-networkd), which is a powerful yet simple and intuitive network manager. 
 
 For using systemd networkd, other network servies must be disabled. (See point 2.1 before doing this). At this point in time, dhcpcd is the default service in Raspbian:
 > systemctl stop dhcpcd && systemctl disable dhcpcd
@@ -24,7 +28,7 @@ Then, enable and activate systemd-networkd:
 > systemctl enable systemd-networkd.service && systemctl start systemd-networkd.service
 > systemctl enable systemd-resolved.service && systemctl start systemd-resolved.service
 
-Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in this directory /etc/systemd/network/ with , with file name extension .network. I got inspired by this [blog](https://blog.michael.franzl.name/2017/02/28/raspberry-pi-gateway-mobile-internet/)
+Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in this directory /etc/systemd/network/ with , with file  extension .network. I got inspired by this [blog](https://blog.michael.franzl.name/2017/02/28/raspberry-pi-gateway-mobile-internet/)
 
 ### 2.1 Ehernet 
 ```shell
@@ -42,27 +46,30 @@ Each network interface (ehernet, usb tethering, usb wifi hotspot) is defined in 
 > sudo systemctl restart systemd-networkd
 ```
 
-> When sharing internet from WiFi adaptor in windows, it assigns the ethernet adaptor with static IP 192.168.137.50 .Note that this interface is only used for configuring the Raspberry with the laptop. Perhaps, it is better to do this step before disabling dhcpd service, as the raspberry might not accept connection from Putty.
-> Metric=500 is used to decide on the priority to use the gateway for connection to internet. If it is the lowest among interfaces with internect access, this will be the default route that raspberry will use.
+>When sharing the Internet from the WiFi adapter in Windows, the ethernet is assigned a static IP 192.168.137.50. Please note that this interface is only used to configure the Raspberry with the laptop. Perhaps, it is better to perform this step before disabling the dhcpd service, as the Raspberry may not accept the Putty connection (I don´t remember on detail how I did this).
+> Metric = 500 is used to decide the priority of using the gateway for the Internet connection. If it is the lowest among the interfaces with Internet access, this will be the default path used by Raspberry.
 > 
 ### 2.2 USB mobile tethering
 ```shell
 > sudo nano /etc/systemd/network/02_mobile.network
 ```
-			[Match] 
-			Name=usb0 
-			[Network] 
-			DHCP=yes 
-			[DHPC]
-			RouteMetric=10
+	[Match] 
+	Name=usb0 
+	[Network] 
+	DHCP=yes 
+	[DHPC]
+	RouteMetric=10
 ```shell
 > sudo systemctl restart systemd-networkd
 ```
+For this interface to work, you will need to connect the mobile device to the USB port of the Raspberrypi and enable USB tethering.
+
 ### 2.3 WiFi hotspot
-Two main steps have to be done: configure the wireless access point (WAP) and configure the network interface.
-> For this project, I used a Ralink RT5370 usb dongle, as my raspberry pi had no WiFi card. You can check if the Raspberry is detecting the usb dongle with > lsusb.
+There are two main steps to be taken: configuring the wireless access point (WAP) and configuring the network interface.
+> For this project, I used a Ralink RT5370 usb dongle, as my raspberry pi had no WiFi card. You can check if the Raspberry is detecting the usb dongle running > lsusb.
+
 #### 2.3.1 WAP
-The wifi hotspot is configured with hostapd, a more detailed example [here](http://va.nce.me/Creating_an%20Access_Point.html)
+The wifi hotspot is configured with hostapd. You can find a more detailed example [here](http://va.nce.me/Creating_an%20Access_Point.html)
 ```shell
 sudo apt install hostapd
 sudo systemctl unmask hostapd
@@ -106,11 +113,11 @@ Then, point hostapd to use the conf file and enable it:
     PoolOffset=100
     PoolSize=20
     LinkLocalAddressing=yes
-		MulticastDNS=yes
+    MulticastDNS=yes
 ```shell
 > sudo systemctl restart systemd-networkd
 ```
->If you want to provide internet access via the WiFi hotspot from other interfaces, you can include IPMasquerade=True under [Network], which allows for IP forwarding and creates the simple routing rules for you.
+>If you want to provide Internet access through the WiFi access point from other interfaces, you can include IPMasquerade = True in [Network], which allows IP forwarding and creates the basic routing rules for you.
 
 At this point, you can check that everything is configured and looking as expected:
 ```shell
@@ -173,18 +180,22 @@ You should see something like:
 
 > I chose a post_interval of 600 seconds. This resulted in a daily data consumption of approx. 1.2MB per day, which allowed me to use a low cost prepaid SIM card.
 
-## 4.1 Wunderground protocool parsing problems
+### 4.1 Wunderground protocool parsing problems
 > After checking /var/log/syslog, I noticed that the data packages were arriving, but they were not being parsed properly. I found the solution in this weewx-interceptor [issue](https://github.com/matthewwall/weewx-interceptor/issues/82) 
 
-## 4.2 Wunderfixer for intermittent internet signal
+### 4.2 Wunderfixer for intermittent internet signal
 If your station is located in a region with intermittent mobile signal, you might want to configure [wunderfixer](http://www.weewx.com/wunderfixer/) to run once per day in order to fill the missing gaps in the previous day.
 
 ```shell
 > crontab -e
 ```
-
 	00 12 * * * wunderfixer --verbose --upload-only=600 --date=$(date  --date="yesterday" +"\%Y-\%m-\%d") --log weewx  > /dev/null 2>&1
   
+## 5. Configure Android device to enable USB tethering automatically
+So far, the system should be robust to log all the data in the local database, and all the systems should restart automatically after a power outage. However, the phone´s USB tethering has to be enabled manually each time the system is restored. Depending on the location of the weather station, power outages can be relatively frequent, in which case the android device can be programmed to enable USB tethering by default.
+First the phone has to be rooted. I used Kingoroot. Then, in the Google market there are some applications that allow to define decision rules. I used [Automate](https://play.google.com/store/apps/details?id=com.llamalab.automate), and then created this rule:
+
+<img src="https://github.com/Alvipas/remote_meteo_station/blob/main/automate.jpeg?raw=true" width="500">
 
 
 
