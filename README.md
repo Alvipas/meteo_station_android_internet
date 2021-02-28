@@ -180,7 +180,7 @@ You should see something like:
 
 > I chose a post_interval of 600 seconds. This resulted in a daily data consumption of approx. 1.2MB per day, which allowed me to use a low cost prepaid SIM card.
 
-### 4.1 Wunderground protocool parsing problems
+### 4.1 Wunderground protocol parsing problems
 > After checking /var/log/syslog, I noticed that the data packages were arriving, but they were not being parsed properly. I found the solution in this weewx-interceptor [issue](https://github.com/matthewwall/weewx-interceptor/issues/82) 
 
 ### 4.2 Wunderfixer for intermittent internet signal
