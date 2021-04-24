@@ -114,10 +114,11 @@ Then, point hostapd to use the conf file and enable it:
     PoolSize=20
     LinkLocalAddressing=yes
     MulticastDNS=yes
+    [Network]
+    IPMasquerade = True
 ```shell
 > sudo systemctl restart systemd-networkd
 ```
->If you want to provide Internet access through the WiFi access point from other interfaces, you can include IPMasquerade = True in [Network], which allows IP forwarding and creates the basic routing rules for you.
 
 At this point, you can check that everything is configured and looking as expected:
 ```shell
@@ -133,7 +134,7 @@ At this point, you can check that everything is configured and looking as expect
 > reboot
 ```
 ## 3. Connect weather station using WSview android app
-Configure the weather station connection to wlan0 access point created in previous step. Follow the steps detailed in WSview app, and choose "Customized" server, with the IP of the wlan0 (192.168.4.1) port 8080. Fill the other fields related to Wunderground service. Then, save configuration and check that the station console shows the WiFi icon. 
+Configure the weather station connection to wlan0 access point created in previous step. Follow the steps detailed in WSview app, and choose "Customized" server, with the IP of the wlan0 (192.168.4.1) port 8080. Fill the other fields related to Wunderground service. Path: /path? . See [issue](https://github.com/matthewwall/weewx-interceptor/issues/85) .  Then, save configuration and check that the station console shows the WiFi icon. 
 
 Then check that the data is arriving at the raspberry using tcpdump.
 ```shell
@@ -180,10 +181,7 @@ You should see something like:
 
 > I chose a post_interval of 600 seconds. This resulted in a daily data consumption of approx. 1.2MB per day, which allowed me to use a low cost prepaid SIM card.
 
-### 4.1 Wunderground protocol parsing problems
-> After checking /var/log/syslog, I noticed that the data packages were arriving, but they were not being parsed properly. I found the solution in this weewx-interceptor [issue](https://github.com/matthewwall/weewx-interceptor/issues/82) 
-
-### 4.2 Wunderfixer for intermittent internet signal
+### 4.1 Wunderfixer for intermittent internet signal
 If your station is located in a region with intermittent mobile signal, you might want to configure [wunderfixer](http://www.weewx.com/wunderfixer/) to run once per day in order to fill the missing gaps in the previous day.
 
 ```shell
