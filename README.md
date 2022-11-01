@@ -187,7 +187,7 @@ If your station is located in a region with intermittent mobile signal, you migh
 ```shell
 > crontab -e
 ```
-	00 12 * * * wunderfixer --verbose --upload-only=600 --date=$(date  --date="yesterday" +"\%Y-\%m-\%d") --log weewx  > /dev/null 2>&1
+	00 12 * * * wunderfixer --verbose --upload-only=1440 --date=$(date  --date="yesterday" +"%Y-%m-%d") --log weewx  > /dev/null 2>&1
   
 ## 5. Configure Android device to enable USB tethering automatically
 So far, the system should be robust to log all the data in the local database, and all the systems should restart automatically after a power outage. However, the phone´s USB tethering has to be enabled manually each time the system is restored. Depending on the location of the weather station, power outages can be relatively frequent, in which case the android device can be programmed to enable USB tethering by default.
